@@ -1,15 +1,24 @@
 import torch
 
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Определяем устройство с правильной логикой
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
 
 # Проверяем доступность устройств
 print(f"MPS available: {torch.backends.mps.is_available()}")
 print(f"CUDA available: {torch.cuda.is_available()}") # шрек шлет меня нахуй
 
 
+# def act(X):
+#     return 0 if X < 0.5 else 1
+
+# Векторизованная функция активации
 def act(X):
-    return 0 if X < 0.5 else 1
+    return (X >= 0.5).float()
 
 
 def go(house, rock, attr):
@@ -20,11 +29,15 @@ def go(house, rock, attr):
     Zh = torch.mv(Wh, X)  # вычисляем сумму на входах нейронов скрытого слоя
     print(f"начальная сумма на входах нейронов скрытого слоя: {Zh}")
 
-    Uh = torch.tensor([act(x) for x in Zh], dtype=torch.float32)
+    # Применяем функцию активации
+    Uh = act(Zh)
     print(f"значения на выходах нейронов скрытого слоя: {Uh}")
 
-    Zout = torch.dot(Wout, Uh)
-    Y = act(Zout)
+    # Uh = torch.tensor([act(x) for x in Zh], dtype=torch.float32)
+    # print(f"значения на выходах нейронов скрытого слоя: {Uh}")
+
+    Zout = torch.mv(Wout, Uh)
+    Y = act(Zout).item()
     print(f"выходное значение НС: {Y}")
 
     return Y
